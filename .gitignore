@@ -1,0 +1,46 @@
+## --- Carpeta de compilación y salida ---
+[Bb]in/
+[Ob]j/
+out/
+
+## --- Archivos específicos de JetBrains (Rider) ---
+.idea/
+*.sln.iml
+*.user
+*.useros
+*.userprefs
+
+## --- Archivos de Visual Studio (por compatibilidad) ---
+.vs/
+*.suo
+*.user
+*.useros
+*.sln.docstates
+
+## --- Dependencias de paquetes (NuGet) ---
+# Se restauran automáticamente, no necesitan estar en el repo
+node_modules/
+packages/
+*.nuget.cache
+# Excluir archivos de restauración de paquetes específicos
+project.lock.json
+project.fragment.lock.json
+
+## --- Resultados de Pruebas y Cobertura ---
+TestResults/
+*.sequenced
+*.coverage
+*.opencoverxml
+
+## --- Archivos de Sistema y Temporales ---
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.log
+
+## --- Configuración Local y Secretos ---
+# Importante: No subir secretos ni configuraciones de entorno
+.env
+appsettings.Development.json
+usersecrets.json
