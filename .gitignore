@@ -7,44 +7,78 @@ out/
 *.sln.docstates
 *.slnx
 
-## --- Archivos específicos de JetBrains (Rider) ---
+.agents
+
+## --- JetBrains (Rider) ---
 .idea/
 *.sln.iml
-*.user
-*.useros
-*.userprefs
 
-## --- Archivos de Visual Studio (por compatibilidad) ---
+## --- Visual Studio ---
 .vs/
 *.suo
 *.user
 *.useros
-*.sln.docstates
+*.userprefs
+*.dbmdl
+*.jfm
 
-## --- Dependencias de paquetes (NuGet) ---
-# Se restauran automáticamente, no necesitan estar en el repo
+## --- VS Code ---
+.vscode/
+
+## --- NuGet ---
 node_modules/
 packages/
 *.nuget.cache
-# Excluir archivos de restauración de paquetes específicos
 project.lock.json
 project.fragment.lock.json
+*.nupkg
 
-## --- Resultados de Pruebas y Cobertura ---
+## --- Pruebas y Cobertura ---
 TestResults/
 *.sequenced
 *.coverage
 *.opencoverxml
+*.cobertura.xml
+coverage/
+coverlet/
 
-## --- Archivos de Sistema y Temporales ---
+## --- Benchmarks ---
+BenchmarkDotNet.Artifacts/
+
+## --- EF Core ---
+*.efbundle
+
+## --- Configuración Local y Secretos ---
+.env
+.env.*
+appsettings.Development.json
+appsettings.*.local.json
+usersecrets.json
+secrets.json
+*.awscredentials
+credentials.json
+
+## --- Certificados y claves ---
+*.pfx
+*.pem
+*.key
+*.crt
+
+## --- Base de datos local ---
+*.mdf
+*.ldf
+*.ndf
+*.bak
+App_Data/
+
+## --- Publicación ---
+*.pubxml
+*.pubxml.user
+publish/
+
+## --- Sistema y Temporales ---
 .DS_Store
 Thumbs.db
 *.swp
 *.tmp
 *.log
-
-## --- Configuración Local y Secretos ---
-# Importante: No subir secretos ni configuraciones de entorno
-.env
-appsettings.Development.json
-usersecrets.json
