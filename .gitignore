@@ -77,3 +77,6 @@ Thumbs.db
 *.swp
 *.tmp
 *.log
+
+# -- Slnx se VS -- #
+*slnx
