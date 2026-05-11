@@ -1,7 +1,11 @@
-## --- Carpeta de compilación y salida ---
+## --- Compilación y salida ---
 [Bb]in/
 [Ob]j/
+bin/
+obj/
 out/
+*.sln.docstates
+*.slnx
 
 ## --- Archivos específicos de JetBrains (Rider) ---
 .idea/
