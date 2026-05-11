@@ -1,9 +1,12 @@
 ## --- Compilación y salida ---
 [Bb]in/
 [Ob]j/
+bin/
+obj/
 out/
 *.sln.docstates
-
+*.slnx
+.agents
 ## --- JetBrains (Rider) ---
 .idea/
 *.sln.iml
