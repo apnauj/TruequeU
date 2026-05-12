@@ -265,6 +265,45 @@ namespace TruequeU.Services
         }
 
 
+        public async Task<bool> SoftDeleteAsync(Guid listingId, Guid ownerId)
+        {
+            if (listingId == Guid.Empty)
+            {
+                throw new ArgumentException("ListingId is required.", nameof(listingId));
+            }
+
+
+            if (ownerId == Guid.Empty)
+            {
+                throw new ArgumentException("OwnerId is required.", nameof(ownerId));
+            }
+
+
+
+
+            var listing_exist = await _context.Listing.
+                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+
+
+
+            if (listing_exist is null)
+            {
+                throw new InvalidOperationException("Listing does not exist or does not belong to the current user.");
+            }
+
+            if(listing_exist.State = ListingState.Disable)
+            {
+                throw new InvalidOperationException("Listing  was alrady deleted");
+            }
+
+            listing_exist.State = ListingState.Disable;
+
+            await _context.SaveChangesAsync();
+            return true; 
+
+        }
+
+
 
 
 

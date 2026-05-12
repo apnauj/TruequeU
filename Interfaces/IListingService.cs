@@ -22,6 +22,6 @@ namespace TruequeU.Interfaces
 
         Task<ListingResponseDto> UpdateAsync(ListingUpdateDTO listing,Guid listingId, Guid ownerId);
 
-
+        Task<bool> SoftDeleteAsync(Guid listingId, Guid ownerId);
     }
 }
