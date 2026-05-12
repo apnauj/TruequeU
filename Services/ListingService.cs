@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Humanizer;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using TruequeU.Enums;
@@ -180,6 +181,81 @@ namespace TruequeU.Services
             if (listing_exist.State == ListingState.Available) throw new InvalidOperationException("Listing is alrady Available");
 
             listing_exist.State = ListingState.Available;
+
+            await _context.SaveChangesAsync();
+
+            return new ListingResponseDto(listing_exist);
+
+
+        }
+
+
+        public async Task<ListingResponseDto> UpdateAsync(ListingUpdateDTO dto, Guid listingId, Guid ownerId)
+        {
+            if (listingId == Guid.Empty)
+            {
+                throw new ArgumentException("ListingId is required.", nameof(listingId));
+            }
+
+
+            if (ownerId == Guid.Empty)
+            {
+                throw new ArgumentException("OwnerId is required.", nameof(ownerId));
+            }
+
+
+
+
+            var listing_exist = await _context.Listing.
+                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+
+
+
+            if (listing_exist is null)
+            {
+                throw new InvalidOperationException("Listing does not exist or does not belong to the current user.");
+            }
+
+            if(listing_exist.State == ListingState.Disable)
+            {
+                throw new InvalidCastException("Disable listing cannot be update");
+            }
+
+
+            if (listing_exist.State == ListingState.Sold)
+            {
+                throw new InvalidOperationException("Sold listings cannot be updated.");
+            }
+
+            if (dto.Title is not null)
+            {
+                listing_exist.Title = dto.Title;
+            }
+
+            if (dto.Description is not null)
+            {
+                listing_exist.Description = dto.Description;
+            }
+
+            if (dto.Price.HasValue)
+            {
+                listing_exist.Price = dto.Price.Value;
+            }
+
+            if (dto.Category.HasValue)
+            {
+                listing_exist.Category = dto.Category.Value;
+            }
+
+            if (dto.Condition.HasValue)
+            {
+                listing_exist.Condition = dto.Condition.Value;
+            }
+
+            if (dto.CampusLocation is not null)
+            {
+                listing_exist.CampusLocation = dto.CampusLocation;
+            }
 
             await _context.SaveChangesAsync();
 

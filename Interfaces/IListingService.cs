@@ -20,6 +20,8 @@ namespace TruequeU.Interfaces
 
         Task<ListingResponseDto> MarkAsAvailableAsync(Guid listingId, Guid ownerId);
 
+        Task<ListingResponseDto> UpdateAsync(ListingUpdateDTO listing,Guid listingId, Guid ownerId);
+
 
     }
 }
