@@ -10,6 +10,10 @@ namespace TruequeU.Interfaces
         Task<ListingResponseDto> CreateAsync(ListingCreateDTO listing, Guid ownerID);
 
 
-        Task<List<ListingResponseDto>> GetByOwnerId(Guid ownerId);
+        Task<List<ListingResponseDto>> GetByOwnerIdAsync(Guid ownerId);
+
+        Task<List<ListingResponseDto>> GetAllAsync();
+
+        
     }
 }

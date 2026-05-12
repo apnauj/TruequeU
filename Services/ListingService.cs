@@ -1,4 +1,5 @@
-﻿using TruequeU.Interfaces;
+﻿using TruequeU.Enums;
+using TruequeU.Interfaces;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
 
@@ -34,13 +35,30 @@ namespace TruequeU.Services
         }
 
 
-        public async Task<List<ListingResponseDto>> GetByOwnerId(Guid ownerId)
+        public async Task<List<ListingResponseDto>> GetByOwnerIdAsync(Guid ownerId)
         {
-            var lisitngs = await _context.Listing.Where(l => l.OwnerId == ownerId).ToListAsync();
 
-            return lisitngs.Select(l => new ListingResponseDto(l)).ToList();
+            if (ownerId == Guid.Empty)
+            {
+                throw new ArgumentException("OwnerId is required.", nameof(ownerId));
+
+            }
+            var listings = await _context.Listing
+                .Where(l => l.OwnerId == ownerId).ToListAsync();
+
+            return listings.Select(l => new ListingResponseDto(l)).ToList();
 
         }
+
+        public async Task<List<ListingResponseDto>> GetAllAsync()
+        {
+            var listings = await _context.Listing
+                .Where(l => l.State != ListingState.Disable).ToListAsync();
+
+            return listings.Select(l => new ListingResponseDto(l)).ToList();
+        }
+
+        
 
 
 
