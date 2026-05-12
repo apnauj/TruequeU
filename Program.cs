@@ -54,6 +54,7 @@ builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IModerationService, ModerationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

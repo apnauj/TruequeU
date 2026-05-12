@@ -87,24 +87,6 @@ public class ModerationService : IModerationService
         return action;
     }
 
-    public async Task<Report> ResolveReportAsync(Guid adminId, Guid reportId, string resolutionNote)
-    {
-        var report = await _context.Reports.FindAsync(reportId);
-        if (report is null)
-            throw new InvalidOperationException("El reporte no existe.");
-
-        if (report.Status == ReportStatus.Closed)
-            throw new InvalidOperationException("El reporte ya está cerrado.");
-
-        report.Status = ReportStatus.Closed;
-        report.ResolvedByUserId = adminId;
-        report.ResolvedAt = DateTime.UtcNow;
-        report.ResolutionNote = resolutionNote;
-
-        await _context.SaveChangesAsync();
-        return report;
-    }
-
     public async Task<(List<ModerationAction> Actions, int TotalCount)> GetModerationHistoryAsync(int page = 1, int pageSize = 20)
     {
         var query = _context.ModerationActions
