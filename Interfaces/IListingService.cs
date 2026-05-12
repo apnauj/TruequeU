@@ -14,6 +14,12 @@ namespace TruequeU.Interfaces
 
         Task<List<ListingResponseDto>> GetAllAsync();
 
-        
+        Task<ListingResponseDto> MarkAsSoldAsync(Guid listingId, Guid ownerId);
+
+        Task<ListingResponseDto> MarkAsReservedAsync(Guid listingId, Guid ownerId);
+
+        Task<ListingResponseDto> MarkAsAvailableAsync(Guid listingId, Guid ownerId);
+
+
     }
 }
