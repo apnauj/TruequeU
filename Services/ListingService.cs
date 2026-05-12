@@ -13,23 +13,26 @@ namespace TruequeU.Services
         }
 
 
-        public async Task<ListingCreateDTO> Create(ListingCreateDTO dto, Guid ownerID)
+        public async Task<ListingResponseDto> Create(ListingCreateDTO dto, Guid ownerID)
         {
             var listing = new Listing(
-                dto.title,
-                dto.description,
-                dto.price,
-                dto.category,
-                dto.condition,
-                dto.campusLocation,
+                dto.Title,
+                dto.Description,
+                dto.Price,
+                dto.Category,
+                dto.Condition,
+                dto.CampusLocation,
                 ownerID
                 );
 
             _context.Listing.Add(listing);
 
+
+            var response = new ListingResponseDto(listing);
+
             await _context.SaveChangesAsync();
 
-            return dto;
+            return response;
 
         }
 

@@ -7,27 +7,27 @@ namespace TruequeU.Models.DTOs
     public class ListingCreateDTO
     {
         [Required, MaxLength(100) ]
-        public string title { get; set;}
+        public string Title { get; set;}
 
         [Required, MaxLength(2000)]
-        public string description { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
-        [Required, Precision(18, 2), Range(0.0, double.MaxValue)]
+        [Required, Range(0.0, double.MaxValue)]
 
-        public decimal price { get; set; }
+        public decimal Price { get; set; }
 
-
-        [Required]
-
-        public Category category { get; set; }
 
         [Required]
 
-        public ItemCondition condition { get; set; }
+        public Category Category { get; set; }
+
+        [Required]
+
+        public ItemCondition Condition { get; set; }
 
 
         [Required, MaxLength(100)]
-        public string campusLocation { get; set; } = string.Empty; 
+        public string CampusLocation { get; set; } = string.Empty; 
 
 
 
