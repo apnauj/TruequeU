@@ -1,10 +1,11 @@
 ﻿using TruequeU.Models;
+using TruequeU.Models.DTOs;
 
 namespace TruequeU.Interfaces
 {
     public interface IListingService
     {
 
-        Task<Listing> Create
+        Task<ListingCreateDTO> Create(ListingCreateDTO lisitng);
     }
 }
