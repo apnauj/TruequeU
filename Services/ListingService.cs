@@ -2,16 +2,19 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
+using Microsoft.EntityFrameworkCore;
 using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
+using TruequeU.Persistence;
 
 namespace TruequeU.Services
 {
     public class ListingService : IListingService
     {
         private readonly ApplicationDbContext _context;
+
         public ListingService(ApplicationDbContext c)
         {
             _context = c;
@@ -28,9 +31,9 @@ namespace TruequeU.Services
                 dto.Condition,
                 dto.CampusLocation,
                 ownerID
-                );
+            );
 
-            _context.Listing.Add(listing);
+            _context.Listings.Add(listing);
             await _context.SaveChangesAsync();
             var response = new ListingResponseDto(listing);
 
@@ -47,7 +50,8 @@ namespace TruequeU.Services
                 throw new ArgumentException("OwnerId is required.", nameof(ownerId));
 
             }
-            var listings = await _context.Listing
+
+            var listings = await _context.Listings
                 .Where(l => l.OwnerId == ownerId).ToListAsync();
 
             return listings.Select(l => new ListingResponseDto(l)).ToList();
@@ -56,7 +60,7 @@ namespace TruequeU.Services
 
         public async Task<List<ListingResponseDto>> GetAllAsync()
         {
-            var listings = await _context.Listing
+            var listings = await _context.Listings
                 .Where(l => l.State != ListingState.Disable).ToListAsync();
 
             return listings.Select(l => new ListingResponseDto(l)).ToList();
@@ -79,9 +83,9 @@ namespace TruequeU.Services
 
 
 
-            var listing_exist = await _context.Listing.
-                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId); 
-           
+            var listing_exist =
+                await _context.Listings.FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+
 
 
             if (listing_exist is null)
@@ -120,9 +124,9 @@ namespace TruequeU.Services
 
 
 
-            var listing_exist = await _context.Listing.
-                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId); 
-           
+            var listing_exist =
+                await _context.Listings.FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+
 
 
             if (listing_exist is null)
@@ -134,7 +138,8 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Listing is alrady sold");
 
-            if (listing_exist.State == ListingState.Reserved) throw new InvalidOperationException("Listing is alrady reserved");
+            if (listing_exist.State == ListingState.Reserved)
+                throw new InvalidOperationException("Listing is alrady reserved");
 
             listing_exist.State = ListingState.Reserved;
 
@@ -164,9 +169,9 @@ namespace TruequeU.Services
 
 
 
-            var listing_exist = await _context.Listing.
-                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId); 
-            
+            var listing_exist =
+                await _context.Listings.FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+
 
 
             if (listing_exist is null)
@@ -178,7 +183,8 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Lisitng is alrady sold");
 
-            if (listing_exist.State == ListingState.Available) throw new InvalidOperationException("Listing is alrady Available");
+            if (listing_exist.State == ListingState.Available)
+                throw new InvalidOperationException("Listing is alrady Available");
 
             listing_exist.State = ListingState.Available;
 
@@ -206,8 +212,8 @@ namespace TruequeU.Services
 
 
 
-            var listing_exist = await _context.Listing.
-                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+            var listing_exist =
+                await _context.Listings.FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
 
 
 
@@ -216,7 +222,7 @@ namespace TruequeU.Services
                 throw new InvalidOperationException("Listing does not exist or does not belong to the current user.");
             }
 
-            if(listing_exist.State == ListingState.Disable)
+            if (listing_exist.State == ListingState.Disable)
             {
                 throw new InvalidCastException("Disable listing cannot be update");
             }
@@ -281,8 +287,8 @@ namespace TruequeU.Services
 
 
 
-            var listing_exist = await _context.Listing.
-                              FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
+            var listing_exist =
+                await _context.Listings.FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId);
 
 
 
@@ -291,7 +297,7 @@ namespace TruequeU.Services
                 throw new InvalidOperationException("Listing does not exist or does not belong to the current user.");
             }
 
-            if(listing_exist.State = ListingState.Disable)
+            if (listing_exist.State == ListingState.Disable)
             {
                 throw new InvalidOperationException("Listing  was alrady deleted");
             }
@@ -299,11 +305,12 @@ namespace TruequeU.Services
             listing_exist.State = ListingState.Disable;
 
             await _context.SaveChangesAsync();
-            return true; 
+            return true;
 
         }
 
 
+    
 
 
 
@@ -312,6 +319,5 @@ namespace TruequeU.Services
 
 
 
-
-    }
+}
 }
