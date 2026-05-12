@@ -16,5 +16,22 @@ namespace TruequeU.Models.DTOs
         public Guid? ResolvedByUserId { get; set; }
         public DateTime? ResolvedAt { get; set; }
         public string? ResolutionNote { get; set; }
+
+        public ReportReadDto() { }
+
+        public ReportReadDto(Models.Report report)
+        {
+            Id = report.Id;
+            ReporterId = report.ReporterId;
+            ReportedUserId = report.ReportedUserId;
+            ReportedListingId = report.ReportedListingId;
+            Reason = report.Reason;
+            Comment = report.Comment;
+            Status = report.Status;
+            CreatedAt = report.CreatedAt;
+            ResolvedByUserId = report.ResolvedByUserId;
+            ResolvedAt = report.ResolvedAt;
+            ResolutionNote = report.ResolutionNote;
+        }
     }
 }

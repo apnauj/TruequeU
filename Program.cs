@@ -50,6 +50,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
