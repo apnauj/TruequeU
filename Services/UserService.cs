@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using TruequeU.Interfaces;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
+using TruequeU.Persistence;
 
 namespace TruequeU.Services;
 
@@ -20,7 +23,7 @@ public class UserService : IUserService
     {
         bool exists = await _context.Users.AnyAsync(u => 
             u.Email == dto.Email.ToLower() || 
-            u.Username.ToLower() == dto.Username.ToLower());
+            u.Username == dto.Username.ToLower());
 
         if (exists)
         {
@@ -52,7 +55,7 @@ public class UserService : IUserService
     {
         bool exists = await _context.Users.AnyAsync(u => 
             u.Email == dto.Email.ToLower() || 
-            u.Username.ToLower() == dto.Username.ToLower());
+            u.Username == dto.Username.ToLower());
 
         if (exists)
         {
@@ -83,7 +86,7 @@ public class UserService : IUserService
 
     public async Task<bool> DeleteUserAsync(Guid id)
     {
-        var userEntity = await _context.Users.AsNoTracking().FindAsync(id);
+        var userEntity = await _context.Users.FindAsync(id);
         if (userEntity == null) return false;
 
         _context.Users.Remove(userEntity);
@@ -94,7 +97,7 @@ public class UserService : IUserService
 
     public async Task<UserReadDto?> GetUserByIdAsync(Guid id)
     {
-        var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(id);
+        var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
         if (userEntity == null) return null;
         
         return new UserReadDto

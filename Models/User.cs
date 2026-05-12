@@ -49,12 +49,12 @@ public class User
     
     private User() { }
     
-    public User(string username, string email, string passwordHash, string? fullName = null)
+    public User(string username, string email, string password, string? fullName = null)
     {
         Id = Guid.NewGuid();
-        Username = username;
+        Username = username.ToLower().Trim();
         Email = email.ToLower().Trim(); 
-        PasswordHash = passwordHash;
+        Password = password;
         FullName = fullName;
         
         State = UserState.Active;
