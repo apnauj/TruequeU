@@ -80,3 +80,4 @@ Thumbs.db
 *.swp
 *.tmp
 *.log
+/skills-lock.json
