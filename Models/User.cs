@@ -1,24 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 using TruequeU.Enums;
 
 namespace TruequeU.Models;
 
-public class User
+public class User : IdentityUser<Guid>
 {
-    [Key]
-    public Guid Id { get; private set; }
-    
-    [Required, MaxLength(50)]
-    public string Username { get; set; }
-    
-    [Required, EmailAddress, MaxLength(255)]
-    public string Email { get; set; }
-    
-    [Required, DataType(DataType.Password)]
-    public string Password { get; set; }
-    
     [MaxLength(100)]
     public string? FullName { get; set; }
 
@@ -29,36 +18,18 @@ public class User
     public double Rating { get; set; }
 
     public UserState State { get; set; }
-    
+
     [Url, MaxLength(2048)]
-    public string? AvatarUrl { get; set; } 
-    
+    public string? AvatarUrl { get; set; }
+
     [MaxLength(500)]
     public string? Bio { get; set; }
 
-    [Required] 
-    public DateTime CreatedAt { get; private set; }
-    
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+
     public DateTime? LastLogin { get; set; }
-    
-    public bool IsEmailVerified { get; set; }
-    
-    public ICollection<Listing> Listings { get; set; } = new HashSet<Listing>();
-    
-    public ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>();
-    
-    private User() { }
-    
-    public User(string username, string email, string password, string? fullName = null)
-    {
-        Id = Guid.NewGuid();
-        Username = username.ToLower().Trim();
-        Email = email.ToLower().Trim(); 
-        Password = password;
-        FullName = fullName;
-        
-        State = UserState.Active;
-        CreatedAt = DateTime.UtcNow;
-        IsEmailVerified = false;
-    }
+
+    public ICollection<Listing> Listings { get; set; } = [];
+
+    public ICollection<Favorite> Favorites { get; set; } = [];
 }
