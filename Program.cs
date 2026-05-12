@@ -57,6 +57,19 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    string[] roleNames = { "User", "Admin" };
+    foreach (var roleName in roleNames)
+    {
+        if (!roleManager.RoleExistsAsync(roleName).Result)
+        {
+            roleManager.CreateAsync(new IdentityRole<Guid>(roleName)).Wait();
+        }
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
