@@ -2,7 +2,7 @@ using System;
 
 namespace TruequeU.Models.DTOs;
 
-public class UserReadDto
+public record UserReadDto
 {
     public Guid Id { get; set; }
     public string Username { get; set; } = string.Empty;

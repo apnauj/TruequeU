@@ -16,8 +16,8 @@ public class User
     [Required, EmailAddress, MaxLength(255)]
     public string Email { get; set; }
     
-    [Required]
-    public string PasswordHash { get; set; }
+    [Required, DataType(DataType.Password)]
+    public string Password { get; set; }
     
     [MaxLength(100)]
     public string? FullName { get; set; }
@@ -30,6 +30,7 @@ public class User
 
     public UserState State { get; set; }
     
+    [Url, MaxLength(2048)]
     public string? AvatarUrl { get; set; } 
     
     [MaxLength(500)]

@@ -11,8 +11,8 @@ public class UserCreateDto
     [Required, EmailAddress, MaxLength(255)]
     public string Email { get; set; }
     
-    [Required, PasswordPropertyText]
-    public string PasswordHash { get; set; }
+    [Required, DataType(DataType.Password)]
+    public string Password { get; set; }
     
     [MaxLength(100)]
     public string? FullName { get; set; }

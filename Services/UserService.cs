@@ -18,11 +18,19 @@ public class UserService : IUserService
 
     public async Task<UserReadDto> CreateUserAsync(UserCreateDto dto)
     {
+        bool exists = await _context.Users.AnyAsync(u => 
+            u.Email == dto.Email.ToLower() || 
+            u.Username.ToLower() == dto.Username.ToLower());
 
+        if (exists)
+        {
+            throw new InvalidOperationException("El usuario o correo electrónico ya se encuentra registrado.");
+        }
+        
         var newUser = new User(
             dto.Username, 
             dto.Email, 
-            dto.PasswordHash, 
+            dto.Password, 
             dto.FullName
         );
         
@@ -42,12 +50,21 @@ public class UserService : IUserService
 
     public async Task<UserReadDto?> UpdateUserAsync(Guid id, UserUpdateDto dto)
     {
+        bool exists = await _context.Users.AnyAsync(u => 
+            u.Email == dto.Email.ToLower() || 
+            u.Username.ToLower() == dto.Username.ToLower());
+
+        if (exists)
+        {
+            throw new InvalidOperationException("El usuario o correo electrónico ya se encuentra registrado.");
+        }
         var userEntity = await _context.Users.FindAsync(id);
         
         if (userEntity == null) return null; 
         
         if (!string.IsNullOrEmpty(dto.Username)) userEntity.Username = dto.Username;
         if (!string.IsNullOrEmpty(dto.FullName)) userEntity.FullName = dto.FullName;
+        if (!string.IsNullOrEmpty(dto.Email)) userEntity.Email = dto.Email.Trim().ToLower();
         if (!string.IsNullOrEmpty(dto.Bio)) userEntity.Bio = dto.Bio;
         if (!string.IsNullOrEmpty(dto.Program)) userEntity.Program = dto.Program;
         if (!string.IsNullOrEmpty(dto.AvatarUrl)) userEntity.AvatarUrl = dto.AvatarUrl;
@@ -64,14 +81,21 @@ public class UserService : IUserService
         };
     }
 
-    public Task<bool> DeleteUserAsync(Guid id)
+    public async Task<bool> DeleteUserAsync(Guid id)
     {
-        throw new NotImplementedException();
+        var userEntity = await _context.Users.AsNoTracking().FindAsync(id);
+        if (userEntity == null) return false;
+
+        _context.Users.Remove(userEntity);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
     public async Task<UserReadDto?> GetUserByIdAsync(Guid id)
     {
-        var userEntity = await _context.Users.FindAsync(id);
+        var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(id);
+        if (userEntity == null) return null;
         
         return new UserReadDto
         {

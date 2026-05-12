@@ -15,7 +15,8 @@ public class UserUpdateDto
 
     [MaxLength(500)]
     public string? Bio { get; set; }
-
+    
+    [Url] 
     public string? AvatarUrl { get; set; }
     
     [EmailAddress, MaxLength(255)]
