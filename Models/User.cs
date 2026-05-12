@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using TruequeU.Enums;
 
@@ -14,8 +16,8 @@ public class User
     [Required, EmailAddress, MaxLength(255)]
     public string Email { get; set; }
     
-    [Required]
-    public string PasswordHash { get; set; }
+    [Required, DataType(DataType.Password)]
+    public string Password { get; set; }
     
     [MaxLength(100)]
     public string? FullName { get; set; }
@@ -28,6 +30,7 @@ public class User
 
     public UserState State { get; set; }
     
+    [Url, MaxLength(2048)]
     public string? AvatarUrl { get; set; } 
     
     [MaxLength(500)]
@@ -46,12 +49,12 @@ public class User
     
     private User() { }
     
-    public User(string username, string email, string passwordHash, string? fullName = null)
+    public User(string username, string email, string password, string? fullName = null)
     {
         Id = Guid.NewGuid();
-        Username = username;
+        Username = username.ToLower().Trim();
         Email = email.ToLower().Trim(); 
-        PasswordHash = passwordHash;
+        Password = password;
         FullName = fullName;
         
         State = UserState.Active;

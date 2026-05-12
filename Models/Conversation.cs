@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace TruequeU.Models;
 
+[Index(nameof(BuyerId), nameof(ListingId), IsUnique = true)]
 public class Conversation
 {
     [Key]
@@ -31,7 +35,7 @@ public class Conversation
 
     public DateTime? LastMessageAt { get; set; }
     
-    public ICollection<Message> Messages { get; set; } = new List<Message>();
+    public ICollection<Message> Messages { get; set; } = new HashSet<Message>();
 
     private Conversation() {}
 
@@ -42,5 +46,6 @@ public class Conversation
         BuyerId = buyerId;
         SellerId = sellerId;
         CreatedAt = DateTime.UtcNow;
+        LastMessageAt = DateTime.UtcNow;
     }
 }
