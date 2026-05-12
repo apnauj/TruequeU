@@ -8,7 +8,6 @@ out/
 *.slnx
 Migrations/
 
-.agents
 
 ## --- JetBrains (Rider) ---
 .idea/
