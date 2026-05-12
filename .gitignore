@@ -6,7 +6,9 @@ obj/
 out/
 *.sln.docstates
 *.slnx
+
 .agents
+
 ## --- JetBrains (Rider) ---
 .idea/
 *.sln.iml
