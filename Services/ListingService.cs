@@ -13,7 +13,7 @@ namespace TruequeU.Services
         }
 
 
-        public async Task<ListingResponseDto> Create(ListingCreateDTO dto, Guid ownerID)
+        public async Task<ListingResponseDto> CreateAsync(ListingCreateDTO dto, Guid ownerID)
         {
             var listing = new Listing(
                 dto.Title,
@@ -26,15 +26,27 @@ namespace TruequeU.Services
                 );
 
             _context.Listing.Add(listing);
-
-
-            var response = new ListingResponseDto(listing);
-
             await _context.SaveChangesAsync();
+            var response = new ListingResponseDto(listing);
 
             return response;
 
         }
+
+
+        public async Task<List<ListingResponseDto>> GetByOwnerId(Guid ownerId)
+        {
+            var lisitngs = await _context.Listing.Where(l => l.OwnerId == ownerId).ToListAsync();
+
+            return lisitngs.Select(l => new ListingResponseDto(l)).ToList();
+
+        }
+
+
+
+
+
+       
 
     }
 }

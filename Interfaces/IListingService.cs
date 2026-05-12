@@ -6,6 +6,10 @@ namespace TruequeU.Interfaces
     public interface IListingService
     {
 
-        Task<ListingResponseDto> Create(ListingCreateDTO lisitng, Guid ownerID);
+        
+        Task<ListingResponseDto> CreateAsync(ListingCreateDTO listing, Guid ownerID);
+
+
+        Task<List<ListingResponseDto>> GetByOwnerId(Guid ownerId);
     }
 }
