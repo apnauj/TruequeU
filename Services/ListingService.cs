@@ -21,7 +21,7 @@ public class ListingService : IListingService
 
     public async Task<ListingResponseDto> CreateAsync(ListingCreateDTO dto, Guid ownerId)
     {
-        _logger.LogDebug("Creating listing for owner {OwnerId}", ownerId);
+        _logger.LogDebug("Creating listing for owner {OwnerId} with {ImageCount} images", ownerId, dto.ImageUrls.Count);
 
         var listing = new Listing(
             dto.Title,
@@ -34,9 +34,21 @@ public class ListingService : IListingService
         );
 
         _context.Listings.Add(listing);
+
+        for (int i = 0; i < dto.ImageUrls.Count; i++)
+        {
+            var image = new ListingImage(
+                dto.ImageUrls[i],
+                listing.Id,
+                isPrimary: i == 0,
+                displayOrder: i
+            );
+            listing.Images.Add(image);
+        }
+
         await _context.SaveChangesAsync().ConfigureAwait(false);
 
-        _logger.LogInformation("Listing {ListingId} created by user {OwnerId}", listing.Id, ownerId);
+        _logger.LogInformation("Listing {ListingId} created by user {OwnerId} with {ImageCount} images", listing.Id, ownerId, dto.ImageUrls.Count);
 
         return new ListingResponseDto(listing);
     }
@@ -49,6 +61,7 @@ public class ListingService : IListingService
         }
 
         var listings = await _context.Listings
+            .Include(l => l.Images)
             .Where(l => l.OwnerId == ownerId)
             .ToListAsync()
             .ConfigureAwait(false);
@@ -59,6 +72,7 @@ public class ListingService : IListingService
     public async Task<List<ListingResponseDto>> GetAllAsync()
     {
         var listings = await _context.Listings
+            .Include(l => l.Images)
             .Where(l => l.State != ListingState.Disable)
             .ToListAsync()
             .ConfigureAwait(false);
@@ -194,6 +208,82 @@ public class ListingService : IListingService
         await _context.SaveChangesAsync().ConfigureAwait(false);
 
         _logger.LogInformation("Listing {ListingId} soft-deleted by owner {OwnerId}", listingId, ownerId);
+
+        return true;
+    }
+
+    public async Task<ListingImageDto> AddImageAsync(Guid listingId, Guid ownerId, string imageUrl)
+    {
+        if (listingId == Guid.Empty)
+            throw new ArgumentException("ListingId is required.", nameof(listingId));
+
+        if (ownerId == Guid.Empty)
+            throw new ArgumentException("OwnerId is required.", nameof(ownerId));
+
+        var listing = await _context.Listings
+            .Include(l => l.Images)
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId)
+            .ConfigureAwait(false);
+
+        if (listing is null)
+            throw new InvalidOperationException("Listing does not exist or does not belong to the current user.");
+
+        if (listing.State == ListingState.Disable || listing.State == ListingState.Sold)
+            throw new InvalidOperationException("Cannot add images to a disabled or sold listing.");
+
+        if (string.IsNullOrWhiteSpace(imageUrl))
+            throw new ArgumentException("Image URL is required.", nameof(imageUrl));
+
+        var displayOrder = listing.Images.Count;
+        var image = new ListingImage(imageUrl, listingId, displayOrder: displayOrder);
+        listing.Images.Add(image);
+
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Image {ImageId} added to listing {ListingId} by user {OwnerId}", image.Id, listingId, ownerId);
+
+        return new ListingImageDto
+        {
+            Id = image.Id,
+            Url = image.Url,
+            IsPrimary = image.IsPrimary,
+            AltText = image.AltText,
+            DisplayOrder = image.DisplayOrder
+        };
+    }
+
+    public async Task<bool> RemoveImageAsync(Guid listingId, Guid ownerId, Guid imageId)
+    {
+        if (listingId == Guid.Empty)
+            throw new ArgumentException("ListingId is required.", nameof(listingId));
+
+        if (ownerId == Guid.Empty)
+            throw new ArgumentException("OwnerId is required.", nameof(ownerId));
+
+        var listing = await _context.Listings
+            .Include(l => l.Images)
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.OwnerId == ownerId)
+            .ConfigureAwait(false);
+
+        if (listing is null)
+            throw new InvalidOperationException("Listing does not exist or does not belong to the current user.");
+
+        if (listing.State == ListingState.Disable || listing.State == ListingState.Sold)
+            throw new InvalidOperationException("Cannot remove images from a disabled or sold listing.");
+
+        if (listing.Images.Count <= 3)
+            throw new InvalidOperationException("A listing must have at least 3 images.");
+
+        var image = listing.Images.FirstOrDefault(i => i.Id == imageId);
+        if (image is null)
+            return false;
+
+        listing.Images.Remove(image);
+        _context.ListingImages.Remove(image);
+
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Image {ImageId} removed from listing {ListingId} by user {OwnerId}", imageId, listingId, ownerId);
 
         return true;
     }

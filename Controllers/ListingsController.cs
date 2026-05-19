@@ -137,6 +137,43 @@ public class ListingsController : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/images")]
+    public async Task<ActionResult<ListingImageDto>> AddImage(Guid id, [FromBody] ImageUrlDto dto)
+    {
+        var ownerId = GetCurrentUserId();
+
+        try
+        {
+            var image = await _listingService.AddImageAsync(id, ownerId, dto.Url).ConfigureAwait(false);
+            return CreatedAtAction(nameof(GetAll), new { id = image.Id }, image);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Add image failed for listing {ListingId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("{listingId:guid}/images/{imageId:guid}")]
+    public async Task<IActionResult> RemoveImage(Guid listingId, Guid imageId)
+    {
+        var ownerId = GetCurrentUserId();
+
+        try
+        {
+            var removed = await _listingService.RemoveImageAsync(listingId, ownerId, imageId).ConfigureAwait(false);
+            if (!removed)
+                return NotFound();
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Remove image {ImageId} failed for listing {ListingId}", imageId, listingId);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     private Guid GetCurrentUserId()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
