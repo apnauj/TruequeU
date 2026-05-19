@@ -33,6 +33,10 @@ public class ListingService : IListingService
     {
         _logger.LogDebug("Creating listing for owner {OwnerId} with {ImageCount} images", ownerId, dto.ImageUrls.Count);
 
+        var user = await _context.Users.FindAsync(ownerId).ConfigureAwait(false);
+        if (user?.State == UserState.Suspended)
+            throw new InvalidOperationException("Suspended users cannot create listings.");
+
         var listing = new Listing(
             dto.Title,
             dto.Description,

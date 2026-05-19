@@ -27,6 +27,10 @@ public class FavoriteService : IFavoriteService
         if (userId == Guid.Empty)
             throw new ArgumentException("UserId is required.", nameof(userId));
 
+        var user = await _context.Users.FindAsync(userId).ConfigureAwait(false);
+        if (user?.State == UserState.Suspended)
+            throw new InvalidOperationException("Suspended users cannot add favorites.");
+
         var listing = await _context.Listings
             .FirstOrDefaultAsync(l => l.Id == listingId)
             .ConfigureAwait(false);

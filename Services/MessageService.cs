@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
@@ -25,6 +26,10 @@ public class MessageService : IMessageService
     public async Task<MessageReadDto> SendMessageAsync(Guid conversationId, Guid senderId, MessageCreateDto dto)
     {
         _logger.LogDebug("User {SenderId} sending message to conversation {ConversationId}", senderId, conversationId);
+
+        var sender = await _context.Users.FindAsync(senderId).ConfigureAwait(false);
+        if (sender?.State == UserState.Suspended)
+            throw new InvalidOperationException("Suspended users cannot send messages.");
 
         var conversation = await _context.Conversations
             .FirstOrDefaultAsync(c => c.Id == conversationId)

@@ -27,6 +27,10 @@ public class ConversationService : IConversationService
     {
         _logger.LogDebug("Creating conversation for buyer {BuyerId} on listing {ListingId}", buyerId, dto.ListingId);
 
+        var buyer = await _context.Users.FindAsync(buyerId).ConfigureAwait(false);
+        if (buyer?.State == UserState.Suspended)
+            throw new InvalidOperationException("Suspended users cannot start conversations.");
+
         var listing = await _context.Listings
             .AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == dto.ListingId)
