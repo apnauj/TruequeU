@@ -1,6 +1,4 @@
-﻿using Mono.TextTemplating;
-using System.Reflection;
-using TruequeU.Enums;
+﻿using TruequeU.Enums;
 
 namespace TruequeU.Models.DTOs
 {

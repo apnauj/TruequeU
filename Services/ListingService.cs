@@ -1,8 +1,4 @@
-﻿using Humanizer;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models;
@@ -15,9 +11,9 @@ namespace TruequeU.Services
     {
         private readonly ApplicationDbContext _context;
 
-        public ListingService(ApplicationDbContext c)
+        public ListingService(ApplicationDbContext context)
         {
-            _context = c;
+            _context = context;
         }
 
 
@@ -95,7 +91,7 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Disable) throw new InvalidOperationException("Listing is disabled");
 
-            if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Listing is alrady sold");
+            if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Listing is already sold");
 
             listing_exist.State = ListingState.Sold;
 
@@ -136,10 +132,10 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Disable) throw new InvalidOperationException("Listing is disabled");
 
-            if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Listing is alrady sold");
+            if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Listing is already sold");
 
             if (listing_exist.State == ListingState.Reserved)
-                throw new InvalidOperationException("Listing is alrady reserved");
+                throw new InvalidOperationException("Listing is already reserved");
 
             listing_exist.State = ListingState.Reserved;
 
@@ -181,10 +177,10 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Disable) throw new InvalidOperationException("Listing is disabled");
 
-            if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Lisitng is alrady sold");
+            if (listing_exist.State == ListingState.Sold) throw new InvalidOperationException("Listing is already sold");
 
             if (listing_exist.State == ListingState.Available)
-                throw new InvalidOperationException("Listing is alrady Available");
+                throw new InvalidOperationException("Listing is already Available");
 
             listing_exist.State = ListingState.Available;
 
@@ -224,7 +220,7 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Disable)
             {
-                throw new InvalidCastException("Disable listing cannot be update");
+                throw new InvalidOperationException("Disabled listings cannot be updated.");
             }
 
 
@@ -299,7 +295,7 @@ namespace TruequeU.Services
 
             if (listing_exist.State == ListingState.Disable)
             {
-                throw new InvalidOperationException("Listing  was alrady deleted");
+                throw new InvalidOperationException("Listing was already deleted");
             }
 
             listing_exist.State = ListingState.Disable;
