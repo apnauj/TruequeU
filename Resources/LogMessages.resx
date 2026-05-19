@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="ListingCreated" xml:space="preserve">
+    <value>Listing {ListingId} created by user {OwnerId}</value>
+  </data>
+  <data name="ListingUpdated" xml:space="preserve">
+    <value>Listing {ListingId} updated by owner {OwnerId}</value>
+  </data>
+  <data name="ListingSoftDeleted" xml:space="preserve">
+    <value>Listing {ListingId} soft-deleted by owner {OwnerId}</value>
+  </data>
+  <data name="ListingMarkedAsSold" xml:space="preserve">
+    <value>Listing {ListingId} marked as sold by owner {OwnerId}</value>
+  </data>
+  <data name="ListingMarkedAsReserved" xml:space="preserve">
+    <value>Listing {ListingId} marked as reserved by owner {OwnerId}</value>
+  </data>
+  <data name="ListingMarkedAsAvailable" xml:space="preserve">
+    <value>Listing {ListingId} marked as available by owner {OwnerId}</value>
+  </data>
+  <data name="ConversationCreated" xml:space="preserve">
+    <value>Conversation {ConversationId} created between buyer {BuyerId} and seller {SellerId}</value>
+  </data>
+  <data name="ConversationDeleted" xml:space="preserve">
+    <value>Conversation {ConversationId} deleted</value>
+  </data>
+  <data name="MessageSent" xml:space="preserve">
+    <value>Message {MessageId} sent in conversation {ConversationId} by user {SenderId}</value>
+  </data>
+  <data name="MessagesMarkedAsRead" xml:space="preserve">
+    <value>All unread messages in conversation {ConversationId} marked as read for user {UserId}</value>
+  </data>
+  <data name="MessageMarkedAsRead" xml:space="preserve">
+    <value>Message {MessageId} marked as read</value>
+  </data>
+  <data name="FavoriteAdded" xml:space="preserve">
+    <value>User {UserId} favorited listing {ListingId}</value>
+  </data>
+  <data name="FavoriteRemoved" xml:space="preserve">
+    <value>User {UserId} removed favorite from listing {ListingId}</value>
+  </data>
+  <data name="ReportCreated" xml:space="preserve">
+    <value>Report {ReportId} created by user {ReporterId}</value>
+  </data>
+  <data name="ReportResolved" xml:space="preserve">
+    <value>Report {ReportId} resolved by admin {AdminId}</value>
+  </data>
+  <data name="UserDeleted" xml:space="preserve">
+    <value>User {UserId} deleted</value>
+  </data>
+  <data name="UserProfileUpdated" xml:space="preserve">
+    <value>User {UserId} profile updated</value>
+  </data>
+  <data name="UserRegistered" xml:space="preserve">
+    <value>User {UserId} registered successfully</value>
+  </data>
+  <data name="UserLoggedIn" xml:space="preserve">
+    <value>User {UserId} logged in successfully</value>
+  </data>
+  <data name="AdminHidListing" xml:space="preserve">
+    <value>Admin {AdminId} hid listing {ListingId}. Reason: {Reason}</value>
+  </data>
+  <data name="AdminUnhidListing" xml:space="preserve">
+    <value>Admin {AdminId} unhid listing {ListingId}. Reason: {Reason}</value>
+  </data>
+  <data name="AdminSuspendedUser" xml:space="preserve">
+    <value>Admin {AdminId} suspended user {TargetUserId}. Reason: {Reason}</value>
+  </data>
+  <data name="AdminUnsuspendedUser" xml:space="preserve">
+    <value>Admin {AdminId} unsuspended user {TargetUserId}. Reason: {Reason}</value>
+  </data>
+  <data name="PasswordResetSuccessful" xml:space="preserve">
+    <value>Password reset successful for user {UserId}</value>
+  </data>
+</root>

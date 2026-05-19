@@ -6,9 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using TruequeU.Configuration;
 using TruequeU.Enums;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
@@ -21,18 +22,18 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
-    private readonly IConfiguration _configuration;
+    private readonly JwtSettings _jwtSettings;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        IConfiguration configuration,
+        IOptions<JwtSettings> jwtSettings,
         ILogger<AuthController> logger)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _jwtSettings = jwtSettings?.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -67,7 +68,7 @@ public class AuthController : ControllerBase
         return Ok(new AuthResponseDto
         {
             Token = token,
-            Expiration = DateTime.UtcNow.AddMinutes(GetJwtExpireMinutes()),
+            Expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             UserId = user.Id,
             UserName = user.UserName!,
             Email = user.Email!
@@ -111,7 +112,7 @@ public class AuthController : ControllerBase
         return Ok(new AuthResponseDto
         {
             Token = token,
-            Expiration = DateTime.UtcNow.AddMinutes(GetJwtExpireMinutes()),
+            Expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             UserId = user.Id,
             UserName = user.UserName!,
             Email = user.Email!
@@ -178,24 +179,18 @@ public class AuthController : ControllerBase
             claims.Add(new Claim(ClaimTypes.Role, role));
 
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            Encoding.UTF8.GetBytes(_jwtSettings.Key));
 
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(GetJwtExpireMinutes()),
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private int GetJwtExpireMinutes()
-    {
-        var value = _configuration["Jwt:ExpireMinutes"];
-        return int.TryParse(value, out var minutes) ? minutes : 60;
     }
 }

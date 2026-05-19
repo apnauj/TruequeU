@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="ListingNotFound" xml:space="preserve">
+    <value>Listing does not exist.</value>
+  </data>
+  <data name="ListingNotOwnedByUser" xml:space="preserve">
+    <value>Listing does not exist or does not belong to the current user.</value>
+  </data>
+  <data name="ListingDisabled" xml:space="preserve">
+    <value>Listing is disabled</value>
+  </data>
+  <data name="ListingAlreadySold" xml:space="preserve">
+    <value>Listing is already sold</value>
+  </data>
+  <data name="ListingAlreadyReserved" xml:space="preserve">
+    <value>Listing is already reserved</value>
+  </data>
+  <data name="ListingAlreadyAvailable" xml:space="preserve">
+    <value>Listing is already Available</value>
+  </data>
+  <data name="ListingAlreadyDeleted" xml:space="preserve">
+    <value>Listing was already deleted</value>
+  </data>
+  <data name="DisabledListingCannotBeUpdated" xml:space="preserve">
+    <value>Disabled listings cannot be updated.</value>
+  </data>
+  <data name="SoldListingCannotBeUpdated" xml:space="preserve">
+    <value>Sold listings cannot be updated.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>User does not exist.</value>
+  </data>
+  <data name="UserSuspended" xml:space="preserve">
+    <value>Suspended users cannot perform this action.</value>
+  </data>
+  <data name="CannotSelfReport" xml:space="preserve">
+    <value>You cannot report yourself.</value>
+  </data>
+  <data name="ReportAlreadyResolved" xml:space="preserve">
+    <value>Report has already been resolved.</value>
+  </data>
+  <data name="ReportNotFound" xml:space="preserve">
+    <value>Report does not exist.</value>
+  </data>
+  <data name="ArticleNotFound" xml:space="preserve">
+    <value>El artículo no existe.</value>
+  </data>
+  <data name="ArticleNotAvailable" xml:space="preserve">
+    <value>El artículo no está disponible para iniciar una conversación.</value>
+  </data>
+  <data name="CannotStartConversationWithSelf" xml:space="preserve">
+    <value>No puedes iniciar una conversación con tu propio artículo.</value>
+  </data>
+  <data name="ConversationAlreadyExists" xml:space="preserve">
+    <value>Ya existe una conversación para este artículo.</value>
+  </data>
+  <data name="ConversationNotFound" xml:space="preserve">
+    <value>La conversación no existe.</value>
+  </data>
+  <data name="NotParticipantInConversation" xml:space="preserve">
+    <value>No tienes permiso para enviar mensajes en esta conversación.</value>
+  </data>
+  <data name="MessageContentEmpty" xml:space="preserve">
+    <value>El contenido del mensaje no puede estar vacío.</value>
+  </data>
+  <data name="ModerationReasonRequired" xml:space="preserve">
+    <value>El motivo de la acción de moderación es obligatorio.</value>
+  </data>
+  <data name="ModerationTargetRequired" xml:space="preserve">
+    <value>Debe especificar un listing o un usuario como objetivo.</value>
+  </data>
+  <data name="ListingAlreadyHidden" xml:space="preserve">
+    <value>El artículo ya está oculto.</value>
+  </data>
+  <data name="ListingNotHidden" xml:space="preserve">
+    <value>El artículo no está oculto.</value>
+  </data>
+  <data name="UserAlreadySuspended" xml:space="preserve">
+    <value>El usuario ya está suspendido.</value>
+  </data>
+  <data name="UserNotSuspended" xml:space="preserve">
+    <value>El usuario no está suspendido.</value>
+  </data>
+  <data name="FavoriteAlreadyExists" xml:space="preserve">
+    <value>Listing is already in favorites.</value>
+  </data>
+  <data name="CannotFavoriteDisabled" xml:space="preserve">
+    <value>Cannot favorite a disabled listing.</value>
+  </data>
+  <data name="ReportCreationFailed" xml:space="preserve">
+    <value>El reporte no se pudo crear.</value>
+  </data>
+  <data name="ListingIdRequired" xml:space="preserve">
+    <value>ListingId is required.</value>
+  </data>
+  <data name="OwnerIdRequired" xml:space="preserve">
+    <value>OwnerId is required.</value>
+  </data>
+  <data name="UserIdRequired" xml:space="preserve">
+    <value>UserId is required.</value>
+  </data>
+</root>
