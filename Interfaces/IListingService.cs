@@ -9,7 +9,7 @@ public interface IListingService
 
     Task<List<ListingResponseDto>> GetByOwnerIdAsync(Guid ownerId);
 
-    Task<List<ListingResponseDto>> GetAllAsync();
+    Task<PagedResult<ListingResponseDto>> GetAllAsync(ListingFilterDto filter);
 
     Task<ListingResponseDto> MarkAsSoldAsync(Guid listingId, Guid ownerId);
 

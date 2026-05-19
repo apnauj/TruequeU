@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -26,11 +27,42 @@ public class ListingsController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<List<ListingResponseDto>>> GetAll()
+    public async Task<ActionResult> GetAll(
+        [FromQuery] string? keyword,
+        [FromQuery] Category? category,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] ItemCondition? condition,
+        [FromQuery] ListingState? state,
+        [FromQuery] DateTime? postedAfter,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        _logger.LogDebug("Fetching all listings");
-        var listings = await _listingService.GetAllAsync().ConfigureAwait(false);
-        return Ok(listings);
+        _logger.LogDebug("Fetching listings with filters: keyword={Keyword}, category={Category}, page={Page}",
+            keyword, category, page);
+
+        var filter = new ListingFilterDto
+        {
+            Keyword = keyword,
+            Category = category,
+            MinPrice = minPrice,
+            MaxPrice = maxPrice,
+            Condition = condition,
+            State = state,
+            PostedAfter = postedAfter,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var result = await _listingService.GetAllAsync(filter).ConfigureAwait(false);
+        return Ok(new
+        {
+            items = result.Items,
+            totalCount = result.TotalCount,
+            page = result.Page,
+            pageSize = result.PageSize,
+            totalPages = result.TotalPages
+        });
     }
 
     [HttpGet("my")]

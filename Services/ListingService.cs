@@ -69,15 +69,58 @@ public class ListingService : IListingService
         return listings.Select(l => new ListingResponseDto(l)).ToList();
     }
 
-    public async Task<List<ListingResponseDto>> GetAllAsync()
+    public async Task<PagedResult<ListingResponseDto>> GetAllAsync(ListingFilterDto filter)
     {
-        var listings = await _context.Listings
+        var query = _context.Listings
             .Include(l => l.Images)
             .Where(l => l.State != ListingState.Disable)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var keyword = filter.Keyword.Trim();
+            query = query.Where(l =>
+                l.Title.Contains(keyword) ||
+                l.Description.Contains(keyword));
+        }
+
+        if (filter.Category.HasValue)
+            query = query.Where(l => l.Category == filter.Category.Value);
+
+        if (filter.MinPrice.HasValue)
+            query = query.Where(l => l.Price >= filter.MinPrice.Value);
+
+        if (filter.MaxPrice.HasValue)
+            query = query.Where(l => l.Price <= filter.MaxPrice.Value);
+
+        if (filter.Condition.HasValue)
+            query = query.Where(l => l.Condition == filter.Condition.Value);
+
+        if (filter.State.HasValue)
+            query = query.Where(l => l.State == filter.State.Value);
+
+        if (filter.PostedAfter.HasValue)
+            query = query.Where(l => l.CreatedAt >= filter.PostedAfter.Value);
+
+        var totalCount = await query.CountAsync().ConfigureAwait(false);
+
+        var page = Math.Max(1, filter.Page);
+        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+
+        var items = await query
+            .OrderByDescending(l => l.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync()
             .ConfigureAwait(false);
 
-        return listings.Select(l => new ListingResponseDto(l)).ToList();
+        return new PagedResult<ListingResponseDto>
+        {
+            Items = items.Select(l => new ListingResponseDto(l)).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<ListingResponseDto> MarkAsSoldAsync(Guid listingId, Guid ownerId)
