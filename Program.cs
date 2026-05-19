@@ -88,6 +88,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+await DbInitializer.SeedAsync(app.Services);
+
 if (app.Environment.IsDevelopment())
 {
     app.MapScalarApiReference();
