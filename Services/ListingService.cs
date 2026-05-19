@@ -19,6 +19,16 @@ public class ListingService : IListingService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    public async Task<ListingResponseDto?> GetByIdAsync(Guid id)
+    {
+        var listing = await _context.Listings
+            .Include(l => l.Images)
+            .FirstOrDefaultAsync(l => l.Id == id)
+            .ConfigureAwait(false);
+
+        return listing is null ? null : new ListingResponseDto(listing);
+    }
+
     public async Task<ListingResponseDto> CreateAsync(ListingCreateDTO dto, Guid ownerId)
     {
         _logger.LogDebug("Creating listing for owner {OwnerId} with {ImageCount} images", ownerId, dto.ImageUrls.Count);

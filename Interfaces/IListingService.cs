@@ -11,6 +11,8 @@ public interface IListingService
 
     Task<PagedResult<ListingResponseDto>> GetAllAsync(ListingFilterDto filter);
 
+    Task<ListingResponseDto?> GetByIdAsync(Guid id);
+
     Task<ListingResponseDto> MarkAsSoldAsync(Guid listingId, Guid ownerId);
 
     Task<ListingResponseDto> MarkAsReservedAsync(Guid listingId, Guid ownerId);

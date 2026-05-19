@@ -26,6 +26,25 @@ public class ListingsController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ListingResponseDto>> GetById(Guid id)
+    {
+        var listing = await _listingService.GetByIdAsync(id).ConfigureAwait(false);
+
+        if (listing is null)
+            return NotFound();
+
+        if (listing.State == ListingState.Disable)
+        {
+            var currentUserId = User.Identity?.IsAuthenticated == true ? GetCurrentUserId() : Guid.Empty;
+            if (listing.OwnerId != currentUserId)
+                return NotFound();
+        }
+
+        return Ok(listing);
+    }
+
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult> GetAll(
         [FromQuery] string? keyword,
