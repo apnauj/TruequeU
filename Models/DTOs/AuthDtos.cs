@@ -29,7 +29,6 @@ public class LoginRequestDto
 
 public class AuthResponseDto
 {
-    public string Token { get; init; } = string.Empty;
     public DateTime Expiration { get; init; }
     public Guid UserId { get; init; }
     public string UserName { get; init; } = string.Empty;

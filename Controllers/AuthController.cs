@@ -4,6 +4,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,6 +22,8 @@ namespace TruequeU.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
+    private const string AuthCookieName = "auth_token";
+
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly JwtSettings _jwtSettings;
@@ -62,12 +66,12 @@ public class AuthController : ControllerBase
         await _userManager.AddToRoleAsync(user, "User").ConfigureAwait(false);
 
         var token = await GenerateJwtTokenAsync(user).ConfigureAwait(false);
+        SetAuthCookie(token);
 
         _logger.LogInformation("User {UserId} registered successfully", user.Id);
 
         return Ok(new AuthResponseDto
         {
-            Token = token,
             Expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             UserId = user.Id,
             UserName = user.UserName!,
@@ -85,37 +89,70 @@ public class AuthController : ControllerBase
         if (user is null)
         {
             _logger.LogWarning("Login failed: user not found for email {Email}", dto.Email);
-            return Unauthorized("Credenciales inválidas.");
+            return Unauthorized(new { error = "Credenciales inválidas." });
         }
 
         if (user.State == UserState.Suspended)
         {
             _logger.LogWarning("Login refused: user {UserId} is suspended", user.Id);
-            return Unauthorized("Tu cuenta ha sido suspendida.");
+            return Unauthorized(new { error = "Tu cuenta ha sido suspendida." });
         }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false).ConfigureAwait(false);
+        var result = await _signInManager.CheckPasswordSignInAsync(
+            user, dto.Password, lockoutOnFailure: false).ConfigureAwait(false);
 
         if (!result.Succeeded)
         {
             _logger.LogWarning("Login failed: invalid password for user {UserId}", user.Id);
-            return Unauthorized("Credenciales inválidas.");
+            return Unauthorized(new { error = "Credenciales inválidas." });
         }
 
         user.LastLogin = DateTime.UtcNow;
         await _userManager.UpdateAsync(user).ConfigureAwait(false);
 
         var token = await GenerateJwtTokenAsync(user).ConfigureAwait(false);
+        SetAuthCookie(token);
 
         _logger.LogInformation("User {UserId} logged in successfully", user.Id);
 
         return Ok(new AuthResponseDto
         {
-            Token = token,
             Expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             UserId = user.Id,
             UserName = user.UserName!,
             Email = user.Email!
+        });
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete(AuthCookieName);
+        return Ok(new { message = "Logged out successfully." });
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<UserReadDto>> GetCurrentUser()
+    {
+        var userId = GetCurrentUserId();
+
+        var user = await _userManager.FindByIdAsync(userId.ToString()).ConfigureAwait(false);
+
+        if (user is null)
+            return NotFound();
+
+        var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+
+        return Ok(new UserReadDto
+        {
+            Id = user.Id,
+            Username = user.UserName!,
+            Email = user.Email!,
+            FullName = user.FullName,
+            Program = user.Program,
+            Bio = user.Bio,
+            Rating = user.Rating
         });
     }
 
@@ -129,7 +166,7 @@ public class AuthController : ControllerBase
         if (user is null)
         {
             _logger.LogWarning("Forgot password: user not found for email {Email}", dto.Email);
-            return Ok("Si el correo existe, se ha enviado un enlace de restablecimiento.");
+            return Ok(new { message = "Si el correo existe, se ha enviado un enlace de restablecimiento." });
         }
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false);
@@ -147,10 +184,11 @@ public class AuthController : ControllerBase
         if (user is null)
         {
             _logger.LogWarning("Reset password: user not found for email {Email}", dto.Email);
-            return BadRequest("Solicitud inválida.");
+            return BadRequest(new { error = "Solicitud inválida." });
         }
 
-        var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword).ConfigureAwait(false);
+        var result = await _userManager.ResetPasswordAsync(
+            user, dto.Token, dto.NewPassword).ConfigureAwait(false);
 
         if (!result.Succeeded)
         {
@@ -160,7 +198,19 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("Password reset successful for user {UserId}", user.Id);
 
-        return Ok("Contraseña restablecida exitosamente.");
+        return Ok(new { message = "Contraseña restablecida exitosamente." });
+    }
+
+    private void SetAuthCookie(string token)
+    {
+        Response.Cookies.Append(AuthCookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Secure = false,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
+            Path = "/"
+        });
     }
 
     private async Task<string> GenerateJwtTokenAsync(User user)
@@ -192,5 +242,11 @@ public class AuthController : ControllerBase
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.Parse(userId!);
     }
 }
