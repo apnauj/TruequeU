@@ -1,6 +1,8 @@
+using System;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -12,10 +14,12 @@ namespace TruequeU.Controllers;
 public class FavoritesController : ControllerBase
 {
     private readonly IFavoriteService _favoriteService;
+    private readonly ILogger<FavoritesController> _logger;
 
-    public FavoritesController(IFavoriteService favoriteService)
+    public FavoritesController(IFavoriteService favoriteService, ILogger<FavoritesController> logger)
     {
-        _favoriteService = favoriteService;
+        _favoriteService = favoriteService ?? throw new ArgumentNullException(nameof(favoriteService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpPost("listings/{id:guid}/favorite")]
@@ -25,12 +29,13 @@ public class FavoritesController : ControllerBase
 
         try
         {
-            var favorite = await _favoriteService.AddFavoriteAsync(id, userId);
+            var favorite = await _favoriteService.AddFavoriteAsync(id, userId).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetMyFavorites), new { id = favorite.Id }, favorite);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Add favorite failed for user {UserId} on listing {ListingId}", userId, id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -41,7 +46,7 @@ public class FavoritesController : ControllerBase
 
         try
         {
-            var removed = await _favoriteService.RemoveFavoriteAsync(id, userId);
+            var removed = await _favoriteService.RemoveFavoriteAsync(id, userId).ConfigureAwait(false);
             if (!removed)
                 return NotFound();
 
@@ -49,7 +54,8 @@ public class FavoritesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Remove favorite failed for user {UserId} on listing {ListingId}", userId, id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -60,12 +66,13 @@ public class FavoritesController : ControllerBase
 
         try
         {
-            var favorites = await _favoriteService.GetUserFavoritesAsync(userId);
+            var favorites = await _favoriteService.GetUserFavoritesAsync(userId).ConfigureAwait(false);
             return Ok(favorites);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Get favorites failed for user {UserId}", userId);
+            return BadRequest(new { error = ex.Message });
         }
     }
 

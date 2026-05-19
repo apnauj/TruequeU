@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
@@ -13,16 +14,21 @@ namespace TruequeU.Services;
 public class MessageService : IMessageService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<MessageService> _logger;
 
-    public MessageService(ApplicationDbContext context)
+    public MessageService(ApplicationDbContext context, ILogger<MessageService> logger)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<MessageReadDto> SendMessageAsync(Guid conversationId, Guid senderId, MessageCreateDto dto)
     {
+        _logger.LogDebug("User {SenderId} sending message to conversation {ConversationId}", senderId, conversationId);
+
         var conversation = await _context.Conversations
-            .FirstOrDefaultAsync(c => c.Id == conversationId);
+            .FirstOrDefaultAsync(c => c.Id == conversationId)
+            .ConfigureAwait(false);
 
         if (conversation == null)
             throw new InvalidOperationException("La conversación no existe.");
@@ -35,7 +41,9 @@ public class MessageService : IMessageService
         _context.Messages.Add(message);
         conversation.LastMessageAt = message.SentAt;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Message {MessageId} sent in conversation {ConversationId} by user {SenderId}", message.Id, conversationId, senderId);
 
         return new MessageReadDto
         {
@@ -63,7 +71,8 @@ public class MessageService : IMessageService
                 SentAt = m.SentAt,
                 IsRead = m.IsRead
             })
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
     }
 
     public async Task MarkAsReadAsync(Guid messageId)
@@ -71,7 +80,10 @@ public class MessageService : IMessageService
         await _context.Messages
             .Where(m => m.Id == messageId)
             .ExecuteUpdateAsync(setters => setters
-                .SetProperty(m => m.IsRead, true));
+                .SetProperty(m => m.IsRead, true))
+            .ConfigureAwait(false);
+
+        _logger.LogDebug("Message {MessageId} marked as read", messageId);
     }
 
     public async Task MarkAllAsReadAsync(Guid conversationId, Guid userId)
@@ -81,6 +93,9 @@ public class MessageService : IMessageService
                         && m.SenderId != userId
                         && !m.IsRead)
             .ExecuteUpdateAsync(setters => setters
-                .SetProperty(m => m.IsRead, true));
+                .SetProperty(m => m.IsRead, true))
+            .ConfigureAwait(false);
+
+        _logger.LogDebug("All unread messages in conversation {ConversationId} marked as read for user {UserId}", conversationId, userId);
     }
 }

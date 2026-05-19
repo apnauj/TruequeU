@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -16,16 +17,18 @@ namespace TruequeU.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, ILogger<UsersController> logger)
     {
-        _userService = userService;
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserReadDto>>> GetAll()
     {
-        var users = await _userService.GetAllUsersAsync();
+        var users = await _userService.GetAllUsersAsync().ConfigureAwait(false);
         return Ok(users);
     }
 
@@ -33,7 +36,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserReadDto>> GetMyProfile()
     {
         var userId = GetCurrentUserId();
-        var user = await _userService.GetUserByIdAsync(userId);
+        var user = await _userService.GetUserByIdAsync(userId).ConfigureAwait(false);
 
         if (user is null)
             return NotFound();
@@ -44,7 +47,7 @@ public class UsersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserReadDto>> GetById(Guid id)
     {
-        var user = await _userService.GetUserByIdAsync(id);
+        var user = await _userService.GetUserByIdAsync(id).ConfigureAwait(false);
 
         if (user is null)
             return NotFound();
@@ -56,7 +59,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserReadDto>> UpdateProfile([FromBody] UserUpdateDto dto)
     {
         var userId = GetCurrentUserId();
-        var user = await _userService.UpdateUserAsync(userId, dto);
+        var user = await _userService.UpdateUserAsync(userId, dto).ConfigureAwait(false);
 
         if (user is null)
             return NotFound();
@@ -68,7 +71,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> DeleteProfile()
     {
         var userId = GetCurrentUserId();
-        var deleted = await _userService.DeleteUserAsync(userId);
+        var deleted = await _userService.DeleteUserAsync(userId).ConfigureAwait(false);
 
         if (!deleted)
             return NotFound();

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models;
 using TruequeU.Models.DTOs;
@@ -16,26 +17,32 @@ public class UserService : IUserService
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<User> _userManager;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService(ApplicationDbContext context, UserManager<User> userManager)
+    public UserService(ApplicationDbContext context, UserManager<User> userManager, ILogger<UserService> logger)
     {
-        _context = context;
-        _userManager = userManager;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var user = await _userManager.FindByIdAsync(id.ToString());
+        var user = await _userManager.FindByIdAsync(id.ToString()).ConfigureAwait(false);
         if (user is null)
             return false;
 
-        var result = await _userManager.DeleteAsync(user);
+        var result = await _userManager.DeleteAsync(user).ConfigureAwait(false);
+
+        if (result.Succeeded)
+            _logger.LogInformation("User {UserId} deleted", id);
+
         return result.Succeeded;
     }
 
     public async Task<UserReadDto?> UpdateUserAsync(Guid id, UserUpdateDto dto, CancellationToken cancellationToken = default)
     {
-        var user = await _userManager.FindByIdAsync(id.ToString());
+        var user = await _userManager.FindByIdAsync(id.ToString()).ConfigureAwait(false);
         if (user is null)
             return null;
 
@@ -48,13 +55,17 @@ public class UserService : IUserService
         if (!string.IsNullOrEmpty(dto.AvatarUrl))
             user.AvatarUrl = dto.AvatarUrl;
 
-        await _userManager.UpdateAsync(user);
+        await _userManager.UpdateAsync(user).ConfigureAwait(false);
+
+        _logger.LogInformation("User {UserId} profile updated", id);
 
         return new UserReadDto
         {
             Id = user.Id,
             Username = user.UserName!,
             Email = user.Email!,
+            FullName = user.FullName,
+            Program = user.Program,
             Bio = user.Bio,
             Rating = user.Rating
         };
@@ -64,7 +75,8 @@ public class UserService : IUserService
     {
         var user = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken)
+            .ConfigureAwait(false);
 
         if (user is null)
             return null;
@@ -74,6 +86,8 @@ public class UserService : IUserService
             Id = user.Id,
             Username = user.UserName!,
             Email = user.Email!,
+            FullName = user.FullName,
+            Program = user.Program,
             Bio = user.Bio,
             Rating = user.Rating
         };
@@ -88,9 +102,12 @@ public class UserService : IUserService
                 Id = user.Id,
                 Username = user.UserName!,
                 Email = user.Email!,
+                FullName = user.FullName,
+                Program = user.Program,
                 Bio = user.Bio,
                 Rating = user.Rating
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models;
@@ -14,17 +15,22 @@ namespace TruequeU.Services;
 public class ConversationService : IConversationService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ConversationService> _logger;
 
-    public ConversationService(ApplicationDbContext context)
+    public ConversationService(ApplicationDbContext context, ILogger<ConversationService> logger)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<ConversationReadDto> CreateConversationAsync(Guid buyerId, ConversationCreateDto dto)
     {
+        _logger.LogDebug("Creating conversation for buyer {BuyerId} on listing {ListingId}", buyerId, dto.ListingId);
+
         var listing = await _context.Listings
             .AsNoTracking()
-            .FirstOrDefaultAsync(l => l.Id == dto.ListingId);
+            .FirstOrDefaultAsync(l => l.Id == dto.ListingId)
+            .ConfigureAwait(false);
 
         if (listing == null)
             throw new InvalidOperationException("El artículo no existe.");
@@ -36,18 +42,20 @@ public class ConversationService : IConversationService
             throw new InvalidOperationException("No puedes iniciar una conversación con tu propio artículo.");
 
         bool exists = await _context.Conversations.AnyAsync(c =>
-            c.BuyerId == buyerId && c.ListingId == dto.ListingId);
+            c.BuyerId == buyerId && c.ListingId == dto.ListingId)
+            .ConfigureAwait(false);
 
         if (exists)
             throw new InvalidOperationException("Ya existe una conversación para este artículo.");
 
         var conversation = new Conversation(dto.ListingId, buyerId, listing.OwnerId);
-
         var message = new Message(conversation.Id, buyerId, dto.Content);
 
         _context.Conversations.Add(conversation);
         _context.Messages.Add(message);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Conversation {ConversationId} created between buyer {BuyerId} and seller {SellerId}", conversation.Id, buyerId, listing.OwnerId);
 
         return new ConversationReadDto
         {
@@ -81,7 +89,8 @@ public class ConversationService : IConversationService
                     .FirstOrDefault(),
                 UnreadCount = c.Messages.Count(m => !m.IsRead && m.SenderId != viewerId)
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<ConversationReadDto>> GetUserConversationsAsync(Guid userId)
@@ -104,16 +113,19 @@ public class ConversationService : IConversationService
                     .FirstOrDefault(),
                 UnreadCount = c.Messages.Count(m => !m.IsRead && m.SenderId != userId)
             })
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
     }
 
     public async Task<bool> DeleteConversationAsync(Guid id)
     {
-        var conversation = await _context.Conversations.FindAsync(id);
+        var conversation = await _context.Conversations.FindAsync(id).ConfigureAwait(false);
         if (conversation == null) return false;
 
         _context.Conversations.Remove(conversation);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Conversation {ConversationId} deleted", id);
 
         return true;
     }

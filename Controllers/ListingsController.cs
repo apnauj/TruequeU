@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -15,17 +16,20 @@ namespace TruequeU.Controllers;
 public class ListingsController : ControllerBase
 {
     private readonly IListingService _listingService;
+    private readonly ILogger<ListingsController> _logger;
 
-    public ListingsController(IListingService listingService)
+    public ListingsController(IListingService listingService, ILogger<ListingsController> logger)
     {
-        _listingService = listingService;
+        _listingService = listingService ?? throw new ArgumentNullException(nameof(listingService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<List<ListingResponseDto>>> GetAll()
     {
-        var listings = await _listingService.GetAllAsync();
+        _logger.LogDebug("Fetching all listings");
+        var listings = await _listingService.GetAllAsync().ConfigureAwait(false);
         return Ok(listings);
     }
 
@@ -33,7 +37,7 @@ public class ListingsController : ControllerBase
     public async Task<ActionResult<List<ListingResponseDto>>> GetMyListings()
     {
         var ownerId = GetCurrentUserId();
-        var listings = await _listingService.GetByOwnerIdAsync(ownerId);
+        var listings = await _listingService.GetByOwnerIdAsync(ownerId).ConfigureAwait(false);
         return Ok(listings);
     }
 
@@ -41,7 +45,7 @@ public class ListingsController : ControllerBase
     public async Task<ActionResult<ListingResponseDto>> Create([FromBody] ListingCreateDTO dto)
     {
         var ownerId = GetCurrentUserId();
-        var listing = await _listingService.CreateAsync(dto, ownerId);
+        var listing = await _listingService.CreateAsync(dto, ownerId).ConfigureAwait(false);
         return CreatedAtAction(nameof(GetAll), new { id = listing.Id }, listing);
     }
 
@@ -52,12 +56,13 @@ public class ListingsController : ControllerBase
 
         try
         {
-            var listing = await _listingService.UpdateAsync(dto, id, ownerId);
+            var listing = await _listingService.UpdateAsync(dto, id, ownerId).ConfigureAwait(false);
             return Ok(listing);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Update failed for listing {ListingId}", id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -68,7 +73,7 @@ public class ListingsController : ControllerBase
 
         try
         {
-            var deleted = await _listingService.SoftDeleteAsync(id, ownerId);
+            var deleted = await _listingService.SoftDeleteAsync(id, ownerId).ConfigureAwait(false);
             if (!deleted)
                 return NotFound();
 
@@ -76,7 +81,8 @@ public class ListingsController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Delete failed for listing {ListingId}", id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -87,12 +93,13 @@ public class ListingsController : ControllerBase
 
         try
         {
-            var listing = await _listingService.MarkAsSoldAsync(id, ownerId);
+            var listing = await _listingService.MarkAsSoldAsync(id, ownerId).ConfigureAwait(false);
             return Ok(listing);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "MarkAsSold failed for listing {ListingId}", id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -103,12 +110,13 @@ public class ListingsController : ControllerBase
 
         try
         {
-            var listing = await _listingService.MarkAsReservedAsync(id, ownerId);
+            var listing = await _listingService.MarkAsReservedAsync(id, ownerId).ConfigureAwait(false);
             return Ok(listing);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "MarkAsReserved failed for listing {ListingId}", id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -119,12 +127,13 @@ public class ListingsController : ControllerBase
 
         try
         {
-            var listing = await _listingService.MarkAsAvailableAsync(id, ownerId);
+            var listing = await _listingService.MarkAsAvailableAsync(id, ownerId).ConfigureAwait(false);
             return Ok(listing);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "MarkAsAvailable failed for listing {ListingId}", id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 

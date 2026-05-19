@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -16,10 +17,12 @@ namespace TruequeU.Controllers;
 public class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
+    private readonly ILogger<ReportsController> _logger;
 
-    public ReportsController(IReportService reportService)
+    public ReportsController(IReportService reportService, ILogger<ReportsController> logger)
     {
-        _reportService = reportService;
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpPost]
@@ -29,16 +32,18 @@ public class ReportsController : ControllerBase
 
         try
         {
-            var report = await _reportService.CreateAsync(reporterId, dto);
+            var report = await _reportService.CreateAsync(reporterId, dto).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetById), new { id = report.Id }, report);
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Report creation failed: invalid argument");
+            return BadRequest(new { error = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Report creation failed for reporter {ReporterId}", reporterId);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -46,7 +51,7 @@ public class ReportsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<ReportReadDto>>> GetAll()
     {
-        var reports = await _reportService.GetAllAsync();
+        var reports = await _reportService.GetAllAsync().ConfigureAwait(false);
         return Ok(reports);
     }
 
@@ -54,7 +59,7 @@ public class ReportsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ReportReadDto>> GetById(Guid id)
     {
-        var report = await _reportService.GetByIdAsync(id);
+        var report = await _reportService.GetByIdAsync(id).ConfigureAwait(false);
 
         if (report is null)
             return NotFound();
@@ -70,12 +75,13 @@ public class ReportsController : ControllerBase
 
         try
         {
-            var report = await _reportService.ResolveAsync(id, adminId, dto.ResolutionNote);
+            var report = await _reportService.ResolveAsync(id, adminId, dto.ResolutionNote).ConfigureAwait(false);
             return Ok(report);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Report resolution failed for report {ReportId}", id);
+            return BadRequest(new { error = ex.Message });
         }
     }
 

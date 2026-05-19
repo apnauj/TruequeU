@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using TruequeU.Enums;
 using TruequeU.Models;
@@ -21,20 +22,25 @@ public class AuthController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<AuthController> logger)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _configuration = configuration;
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
     {
+        _logger.LogDebug("Register attempt for email {Email}", dto.Email);
+
         var user = new User
         {
             UserName = dto.UserName.Trim(),
@@ -44,14 +50,19 @@ public class AuthController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        var result = await _userManager.CreateAsync(user, dto.Password);
+        var result = await _userManager.CreateAsync(user, dto.Password).ConfigureAwait(false);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Registration failed for {Email}: {Errors}", dto.Email, result.Errors);
             return BadRequest(result.Errors);
+        }
 
-        await _userManager.AddToRoleAsync(user, "User");
+        await _userManager.AddToRoleAsync(user, "User").ConfigureAwait(false);
 
-        var token = await GenerateJwtTokenAsync(user);
+        var token = await GenerateJwtTokenAsync(user).ConfigureAwait(false);
+
+        _logger.LogInformation("User {UserId} registered successfully", user.Id);
 
         return Ok(new AuthResponseDto
         {
@@ -66,23 +77,36 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email.Trim());
+        _logger.LogDebug("Login attempt for email {Email}", dto.Email);
+
+        var user = await _userManager.FindByEmailAsync(dto.Email.Trim()).ConfigureAwait(false);
 
         if (user is null)
+        {
+            _logger.LogWarning("Login failed: user not found for email {Email}", dto.Email);
             return Unauthorized("Credenciales inválidas.");
+        }
 
         if (user.State == UserState.Suspended)
+        {
+            _logger.LogWarning("Login refused: user {UserId} is suspended", user.Id);
             return Unauthorized("Tu cuenta ha sido suspendida.");
+        }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
+        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false).ConfigureAwait(false);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Login failed: invalid password for user {UserId}", user.Id);
             return Unauthorized("Credenciales inválidas.");
+        }
 
         user.LastLogin = DateTime.UtcNow;
-        await _userManager.UpdateAsync(user);
+        await _userManager.UpdateAsync(user).ConfigureAwait(false);
 
-        var token = await GenerateJwtTokenAsync(user);
+        var token = await GenerateJwtTokenAsync(user).ConfigureAwait(false);
+
+        _logger.LogInformation("User {UserId} logged in successfully", user.Id);
 
         return Ok(new AuthResponseDto
         {
@@ -97,12 +121,17 @@ public class AuthController : ControllerBase
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email.Trim());
+        _logger.LogDebug("Forgot password request for email {Email}", dto.Email);
+
+        var user = await _userManager.FindByEmailAsync(dto.Email.Trim()).ConfigureAwait(false);
 
         if (user is null)
+        {
+            _logger.LogWarning("Forgot password: user not found for email {Email}", dto.Email);
             return Ok("Si el correo existe, se ha enviado un enlace de restablecimiento.");
+        }
 
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user).ConfigureAwait(false);
 
         return Ok(new { token });
     }
@@ -110,22 +139,32 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email.Trim());
+        _logger.LogDebug("Reset password request for email {Email}", dto.Email);
+
+        var user = await _userManager.FindByEmailAsync(dto.Email.Trim()).ConfigureAwait(false);
 
         if (user is null)
+        {
+            _logger.LogWarning("Reset password: user not found for email {Email}", dto.Email);
             return BadRequest("Solicitud inválida.");
+        }
 
-        var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+        var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword).ConfigureAwait(false);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Reset password failed for email {Email}: {Errors}", dto.Email, result.Errors);
             return BadRequest(result.Errors);
+        }
+
+        _logger.LogInformation("Password reset successful for user {UserId}", user.Id);
 
         return Ok("Contraseña restablecida exitosamente.");
     }
 
     private async Task<string> GenerateJwtTokenAsync(User user)
     {
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
 
         var claims = new List<Claim>
         {

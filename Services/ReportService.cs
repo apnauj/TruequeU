@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models;
@@ -14,20 +11,26 @@ namespace TruequeU.Services;
 public class ReportService : IReportService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ReportService> _logger;
 
-    public ReportService(ApplicationDbContext context)
+    public ReportService(ApplicationDbContext context, ILogger<ReportService> logger)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<ReportReadDto> CreateAsync(Guid reporterId, ReportCreateDto dto)
     {
+        _logger.LogDebug("User {ReporterId} creating report against user {ReportedUserId}", reporterId, dto.ReportedUserId);
+
         var report = new Report(reporterId, dto.ReportedUserId, dto.Reason, dto.Comment, dto.ReportedListingId);
 
         _context.Reports.Add(report);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
-        return await GetByIdAsync(report.Id)
+        _logger.LogInformation("Report {ReportId} created by user {ReporterId}", report.Id, reporterId);
+
+        return await GetByIdAsync(report.Id).ConfigureAwait(false)
                ?? throw new InvalidOperationException("El reporte no se pudo crear.");
     }
 
@@ -53,7 +56,8 @@ public class ReportService : IReportService
                 ResolvedAt = r.ResolvedAt,
                 ResolutionNote = r.ResolutionNote
             })
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
     }
 
     public async Task<ReportReadDto?> GetByIdAsync(Guid id)
@@ -78,12 +82,13 @@ public class ReportService : IReportService
                 ResolvedAt = r.ResolvedAt,
                 ResolutionNote = r.ResolutionNote
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
     }
 
     public async Task<ReportReadDto> ResolveAsync(Guid id, Guid adminId, string resolutionNote)
     {
-        var report = await _context.Reports.FindAsync(id)
+        var report = await _context.Reports.FindAsync(id).ConfigureAwait(false)
             ?? throw new InvalidOperationException("El reporte no existe.");
 
         if (report.Status != ReportStatus.Open)
@@ -94,8 +99,10 @@ public class ReportService : IReportService
         report.ResolvedAt = DateTime.UtcNow;
         report.ResolutionNote = resolutionNote;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
-        return (await GetByIdAsync(id))!;
+        _logger.LogInformation("Report {ReportId} resolved by admin {AdminId}", id, adminId);
+
+        return (await GetByIdAsync(id).ConfigureAwait(false))!;
     }
 }

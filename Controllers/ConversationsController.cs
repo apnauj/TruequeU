@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -16,20 +17,23 @@ public class ConversationsController : ControllerBase
 {
     private readonly IConversationService _conversationService;
     private readonly IMessageService _messageService;
+    private readonly ILogger<ConversationsController> _logger;
 
     public ConversationsController(
         IConversationService conversationService,
-        IMessageService messageService)
+        IMessageService messageService,
+        ILogger<ConversationsController> logger)
     {
-        _conversationService = conversationService;
-        _messageService = messageService;
+        _conversationService = conversationService ?? throw new ArgumentNullException(nameof(conversationService));
+        _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ConversationReadDto>>> GetMyConversations()
     {
         var userId = GetCurrentUserId();
-        var conversations = await _conversationService.GetUserConversationsAsync(userId);
+        var conversations = await _conversationService.GetUserConversationsAsync(userId).ConfigureAwait(false);
         return Ok(conversations);
     }
 
@@ -37,7 +41,7 @@ public class ConversationsController : ControllerBase
     public async Task<ActionResult<ConversationReadDto>> GetById(Guid id)
     {
         var userId = GetCurrentUserId();
-        var conversation = await _conversationService.GetConversationByIdAsync(id, userId);
+        var conversation = await _conversationService.GetConversationByIdAsync(id, userId).ConfigureAwait(false);
 
         if (conversation is null)
             return NotFound();
@@ -52,19 +56,20 @@ public class ConversationsController : ControllerBase
 
         try
         {
-            var conversation = await _conversationService.CreateConversationAsync(buyerId, dto);
+            var conversation = await _conversationService.CreateConversationAsync(buyerId, dto).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetById), new { id = conversation.Id }, conversation);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Create conversation failed for buyer {BuyerId}", buyerId);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var deleted = await _conversationService.DeleteConversationAsync(id);
+        var deleted = await _conversationService.DeleteConversationAsync(id).ConfigureAwait(false);
 
         if (!deleted)
             return NotFound();
@@ -75,7 +80,7 @@ public class ConversationsController : ControllerBase
     [HttpGet("{conversationId:guid}/messages")]
     public async Task<ActionResult<IEnumerable<MessageReadDto>>> GetMessages(Guid conversationId)
     {
-        var messages = await _messageService.GetMessagesAsync(conversationId);
+        var messages = await _messageService.GetMessagesAsync(conversationId).ConfigureAwait(false);
         return Ok(messages);
     }
 
@@ -86,19 +91,20 @@ public class ConversationsController : ControllerBase
 
         try
         {
-            var message = await _messageService.SendMessageAsync(conversationId, senderId, dto);
+            var message = await _messageService.SendMessageAsync(conversationId, senderId, dto).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetMessages), new { conversationId }, message);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, "Send message failed in conversation {ConversationId}", conversationId);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
     [HttpPatch("{conversationId:guid}/messages/{messageId:guid}/read")]
     public async Task<IActionResult> MarkMessageAsRead(Guid conversationId, Guid messageId)
     {
-        await _messageService.MarkAsReadAsync(messageId);
+        await _messageService.MarkAsReadAsync(messageId).ConfigureAwait(false);
         return NoContent();
     }
 
@@ -106,7 +112,7 @@ public class ConversationsController : ControllerBase
     public async Task<IActionResult> MarkAllAsRead(Guid conversationId)
     {
         var userId = GetCurrentUserId();
-        await _messageService.MarkAllAsReadAsync(conversationId, userId);
+        await _messageService.MarkAllAsReadAsync(conversationId, userId).ConfigureAwait(false);
         return NoContent();
     }
 

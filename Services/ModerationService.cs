@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TruequeU.Enums;
 using TruequeU.Interfaces;
 using TruequeU.Models;
@@ -9,15 +10,19 @@ namespace TruequeU.Services;
 public class ModerationService : IModerationService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ModerationService> _logger;
 
-    public ModerationService(ApplicationDbContext context)
+    public ModerationService(ApplicationDbContext context, ILogger<ModerationService> logger)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<ModerationAction> HideListingAsync(Guid adminId, Guid listingId, string reason)
     {
-        var listing = await _context.Listings.FindAsync(listingId);
+        _logger.LogDebug("Admin {AdminId} hiding listing {ListingId}", adminId, listingId);
+
+        var listing = await _context.Listings.FindAsync(listingId).ConfigureAwait(false);
         if (listing is null)
             throw new InvalidOperationException("El artículo no existe.");
 
@@ -29,13 +34,18 @@ public class ModerationService : IModerationService
         var action = new ModerationAction(adminId, ModerationActionType.HideListing, reason, targetListingId: listingId);
         _context.ModerationActions.Add(action);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Admin {AdminId} hid listing {ListingId}. Reason: {Reason}", adminId, listingId, reason);
+
         return action;
     }
 
     public async Task<ModerationAction> UnhideListingAsync(Guid adminId, Guid listingId, string reason)
     {
-        var listing = await _context.Listings.FindAsync(listingId);
+        _logger.LogDebug("Admin {AdminId} unhiding listing {ListingId}", adminId, listingId);
+
+        var listing = await _context.Listings.FindAsync(listingId).ConfigureAwait(false);
         if (listing is null)
             throw new InvalidOperationException("El artículo no existe.");
 
@@ -47,13 +57,18 @@ public class ModerationService : IModerationService
         var action = new ModerationAction(adminId, ModerationActionType.UnhideListing, reason, targetListingId: listingId);
         _context.ModerationActions.Add(action);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Admin {AdminId} unhid listing {ListingId}. Reason: {Reason}", adminId, listingId, reason);
+
         return action;
     }
 
     public async Task<ModerationAction> SuspendUserAsync(Guid adminId, Guid targetUserId, string reason)
     {
-        var user = await _context.Users.FindAsync(targetUserId);
+        _logger.LogDebug("Admin {AdminId} suspending user {TargetUserId}", adminId, targetUserId);
+
+        var user = await _context.Users.FindAsync(targetUserId).ConfigureAwait(false);
         if (user is null)
             throw new InvalidOperationException("El usuario no existe.");
 
@@ -65,13 +80,18 @@ public class ModerationService : IModerationService
         var action = new ModerationAction(adminId, ModerationActionType.SuspendUser, reason, targetUserId: targetUserId);
         _context.ModerationActions.Add(action);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Admin {AdminId} suspended user {TargetUserId}. Reason: {Reason}", adminId, targetUserId, reason);
+
         return action;
     }
 
     public async Task<ModerationAction> UnsuspendUserAsync(Guid adminId, Guid targetUserId, string reason)
     {
-        var user = await _context.Users.FindAsync(targetUserId);
+        _logger.LogDebug("Admin {AdminId} unsuspending user {TargetUserId}", adminId, targetUserId);
+
+        var user = await _context.Users.FindAsync(targetUserId).ConfigureAwait(false);
         if (user is null)
             throw new InvalidOperationException("El usuario no existe.");
 
@@ -83,7 +103,10 @@ public class ModerationService : IModerationService
         var action = new ModerationAction(adminId, ModerationActionType.UnsuspendUser, reason, targetUserId: targetUserId);
         _context.ModerationActions.Add(action);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
+
+        _logger.LogInformation("Admin {AdminId} unsuspended user {TargetUserId}. Reason: {Reason}", adminId, targetUserId, reason);
+
         return action;
     }
 
@@ -96,12 +119,13 @@ public class ModerationService : IModerationService
             .Include(a => a.TargetUser)
             .OrderByDescending(a => a.CreatedAt);
 
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync().ConfigureAwait(false);
 
         var actions = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
 
         return (actions, totalCount);
     }
