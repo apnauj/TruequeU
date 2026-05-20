@@ -27,6 +27,9 @@
     <ItemGroup>
       <Folder Include="Services\" />
       <Folder Include="Persistence\" />
+      <Compile Remove="TruequeU.Tests\**" />
+      <None Remove="TruequeU.Tests\**" />
+      <Content Remove="TruequeU.Tests\**" />
     </ItemGroup>
 
 </Project>
