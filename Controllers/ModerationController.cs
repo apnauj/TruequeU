@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TruequeU.Authorization;
 using TruequeU.Interfaces;
 using TruequeU.Models;
 
@@ -12,7 +13,7 @@ namespace TruequeU.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = RoleConstants.Admin)]
 public class ModerationController : ControllerBase
 {
     private readonly IModerationService _moderationService;

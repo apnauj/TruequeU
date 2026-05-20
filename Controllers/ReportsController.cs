@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TruequeU.Authorization;
 using TruequeU.Interfaces;
 using TruequeU.Models.DTOs;
 
@@ -47,7 +48,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = RoleConstants.Admin)]
     public async Task<ActionResult<IEnumerable<ReportReadDto>>> GetAll()
     {
         var reports = await _reportService.GetAllAsync().ConfigureAwait(false);
@@ -55,7 +56,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = RoleConstants.Admin)]
     public async Task<ActionResult<ReportReadDto>> GetById(Guid id)
     {
         var report = await _reportService.GetByIdAsync(id).ConfigureAwait(false);
@@ -67,7 +68,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/resolve")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = RoleConstants.Admin)]
     public async Task<ActionResult<ReportReadDto>> Resolve(Guid id, [FromBody] ResolveReportDto dto)
     {
         var adminId = GetCurrentUserId();

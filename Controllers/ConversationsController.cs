@@ -69,7 +69,8 @@ public class ConversationsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var deleted = await _conversationService.DeleteConversationAsync(id).ConfigureAwait(false);
+        var userId = GetCurrentUserId();
+        var deleted = await _conversationService.DeleteConversationAsync(id, userId).ConfigureAwait(false);
 
         if (!deleted)
             return NotFound();
@@ -80,6 +81,11 @@ public class ConversationsController : ControllerBase
     [HttpGet("{conversationId:guid}/messages")]
     public async Task<ActionResult<IEnumerable<MessageReadDto>>> GetMessages(Guid conversationId)
     {
+        var userId = GetCurrentUserId();
+        var conversation = await _conversationService.GetConversationByIdAsync(conversationId, userId).ConfigureAwait(false);
+        if (conversation is null)
+            return NotFound();
+
         var messages = await _messageService.GetMessagesAsync(conversationId).ConfigureAwait(false);
         return Ok(messages);
     }
@@ -104,6 +110,11 @@ public class ConversationsController : ControllerBase
     [HttpPatch("{conversationId:guid}/messages/{messageId:guid}/read")]
     public async Task<IActionResult> MarkMessageAsRead(Guid conversationId, Guid messageId)
     {
+        var userId = GetCurrentUserId();
+        var conversation = await _conversationService.GetConversationByIdAsync(conversationId, userId).ConfigureAwait(false);
+        if (conversation is null)
+            return NotFound();
+
         await _messageService.MarkAsReadAsync(messageId).ConfigureAwait(false);
         return NoContent();
     }

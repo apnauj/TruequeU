@@ -10,5 +10,5 @@ public interface IConversationService
     Task<ConversationReadDto> CreateConversationAsync(Guid buyerId, ConversationCreateDto dto);
     Task<ConversationReadDto?> GetConversationByIdAsync(Guid id, Guid viewerId);
     Task<IEnumerable<ConversationReadDto>> GetUserConversationsAsync(Guid userId);
-    Task<bool> DeleteConversationAsync(Guid id);
+    Task<bool> DeleteConversationAsync(Guid id, Guid userId);
 }

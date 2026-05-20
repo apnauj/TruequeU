@@ -78,7 +78,7 @@ public class ConversationService : IConversationService
     {
         return await _context.Conversations
             .AsNoTracking()
-            .Where(c => c.Id == id)
+            .Where(c => c.Id == id && (c.BuyerId == viewerId || c.SellerId == viewerId))
             .Select(c => new ConversationReadDto
             {
                 Id = c.Id,
@@ -121,10 +121,13 @@ public class ConversationService : IConversationService
             .ConfigureAwait(false);
     }
 
-    public async Task<bool> DeleteConversationAsync(Guid id)
+    public async Task<bool> DeleteConversationAsync(Guid id, Guid userId)
     {
         var conversation = await _context.Conversations.FindAsync(id).ConfigureAwait(false);
         if (conversation == null) return false;
+
+        if (conversation.BuyerId != userId && conversation.SellerId != userId)
+            return false;
 
         _context.Conversations.Remove(conversation);
         await _context.SaveChangesAsync().ConfigureAwait(false);

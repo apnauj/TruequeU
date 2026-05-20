@@ -97,7 +97,7 @@ public class ListingsController : ControllerBase
     {
         var ownerId = GetCurrentUserId();
         var listing = await _listingService.CreateAsync(dto, ownerId).ConfigureAwait(false);
-        return CreatedAtAction(nameof(GetAll), new { id = listing.Id }, listing);
+        return CreatedAtAction(nameof(GetById), new { id = listing.Id }, listing);
     }
 
     [HttpPut("{id:guid}")]
@@ -196,7 +196,7 @@ public class ListingsController : ControllerBase
         try
         {
             var image = await _listingService.AddImageAsync(id, ownerId, dto.Url).ConfigureAwait(false);
-            return CreatedAtAction(nameof(GetAll), new { id = image.Id }, image);
+            return Ok(image);
         }
         catch (InvalidOperationException ex)
         {

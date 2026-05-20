@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using TruequeU.Authorization;
 using TruequeU.Configuration;
 using TruequeU.Enums;
 using TruequeU.Models;
@@ -28,17 +30,20 @@ public class AuthController : ControllerBase
     private readonly SignInManager<User> _signInManager;
     private readonly JwtSettings _jwtSettings;
     private readonly ILogger<AuthController> _logger;
+    private readonly IWebHostEnvironment _environment;
 
     public AuthController(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IOptions<JwtSettings> jwtSettings,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IWebHostEnvironment environment)
     {
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
         _jwtSettings = jwtSettings?.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _environment = environment ?? throw new ArgumentNullException(nameof(environment));
     }
 
     [HttpPost("register")]
@@ -60,10 +65,20 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
         {
             _logger.LogWarning("Registration failed for {Email}: {Errors}", dto.Email, result.Errors);
-            return BadRequest(result.Errors);
+
+            var duplicateEmail = result.Errors.FirstOrDefault(e => e.Code == "DuplicateEmail");
+            if (duplicateEmail is not null)
+                return Conflict(new { error = "Email is already taken." });
+
+            var duplicateUserName = result.Errors.FirstOrDefault(e => e.Code == "DuplicateUserName");
+            if (duplicateUserName is not null)
+                return Conflict(new { error = "Username is already taken." });
+
+            var firstError = result.Errors.FirstOrDefault();
+            return BadRequest(new { error = firstError?.Description ?? "Registration failed." });
         }
 
-        await _userManager.AddToRoleAsync(user, "User").ConfigureAwait(false);
+        await _userManager.AddToRoleAsync(user, RoleConstants.User).ConfigureAwait(false);
 
         var token = await GenerateJwtTokenAsync(user).ConfigureAwait(false);
         SetAuthCookie(token);
@@ -142,8 +157,6 @@ public class AuthController : ControllerBase
         if (user is null)
             return NotFound();
 
-        var roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-
         return Ok(new UserReadDto
         {
             Id = user.Id,
@@ -193,7 +206,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
         {
             _logger.LogWarning("Reset password failed for email {Email}: {Errors}", dto.Email, result.Errors);
-            return BadRequest(result.Errors);
+            return BadRequest(new { error = "Invalid password reset request." });
         }
 
         _logger.LogInformation("Password reset successful for user {UserId}", user.Id);
@@ -203,11 +216,12 @@ public class AuthController : ControllerBase
 
     private void SetAuthCookie(string token)
     {
+        var isProduction = _environment.IsProduction();
         Response.Cookies.Append(AuthCookieName, token, new CookieOptions
         {
             HttpOnly = true,
-            SameSite = SameSiteMode.Lax,
-            Secure = false,
+            SameSite = isProduction ? SameSiteMode.Strict : SameSiteMode.Lax,
+            Secure = isProduction,
             Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
             Path = "/"
         });
