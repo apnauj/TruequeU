@@ -30,7 +30,6 @@ public class Conversation
     [ForeignKey(nameof(SellerId))]
     public User Seller { get; set; } = null!;
 
-    [Required]
     public DateTime CreatedAt { get; private set; }
 
     public DateTime? LastMessageAt { get; set; }

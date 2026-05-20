@@ -33,10 +33,8 @@ public class Report
     [Required, MaxLength(2000)]
     public string Comment { get; set; }
     
-    [Required]
     public ReportStatus Status { get; set; }
 
-    [Required]
     public DateTime CreatedAt { get; private set; }
 
     public Guid? ResolvedByUserId { get; set; }

@@ -27,7 +27,6 @@ public class Message
     [MaxLength(2000)] 
     public string Content { get; set; }
 
-    [Required]
     public DateTime SentAt { get; private set; }
 
     public bool IsRead { get; set; }
