@@ -12,6 +12,9 @@ Migrations/
 ## --- JetBrains (Rider) ---
 .idea/
 *.sln.iml
+.agents
+.claude
+.junie
 
 ## --- Visual Studio ---
 .vs/
